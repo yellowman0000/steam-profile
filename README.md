@@ -29,7 +29,7 @@ Steam's Web API doesn't expose everything, so the generator pulls from several s
 
 ```bash
 cp .env.example .env        # add STEAM_API_KEY + STEAMID
-python3 fetch_steam.py      # writes data.json + index.html
+python3 fetch_steam.py      # writes data.js + index.html
 ```
 
 Get an API key at <https://steamcommunity.com/dev/apikey>. Needs Python 3 stdlib only
@@ -45,4 +45,5 @@ the section is driven entirely by `showcase.json` in this repo.
 ## Notes
 
 - Family titles are only discoverable on a machine with Steam installed.
-- `index.html` embeds all data, so it's self-contained — host it anywhere static.
+- `index.html` is tiny; the data lives in `data.js`, loaded via a `<script src>` so the
+  page still works when opened directly from disk (a `fetch()` would be blocked there).

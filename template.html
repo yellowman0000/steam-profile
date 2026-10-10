@@ -110,6 +110,7 @@
   .arow{display:grid;grid-template-columns:56px 1fr auto;gap:16px;align-items:center;
     background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 18px}
   .arow img{width:56px;height:56px;border-radius:12px;background:rgba(255,255,255,.06)}
+  .arow .nicon{width:56px;height:56px;border-radius:12px;background:rgba(255,255,255,.06);flex:none}
   .arow.locked{opacity:.62}
   .arow.locked img{filter:grayscale(1)}
   .arow .at{font-size:15.5px;font-weight:600;letter-spacing:-.005em}
@@ -178,9 +179,9 @@
   <div id="view"></div>
 </div>
 
-<script id="steam-data" type="application/json">/*__STEAM_DATA__*/null</script>
+<script src="data.js"></script>
 <script>
-const D = JSON.parse(document.getElementById('steam-data').textContent);
+const D = window.STEAM_DATA;
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmtHours = m => (m/60).toLocaleString(undefined,{maximumFractionDigits:1}) + ' hours';
@@ -213,6 +214,9 @@ window.imgFB = el => {
 };
 const img = (srcs, cls) => `<img class="${cls||''}" loading="lazy" src="${srcs[0]}"
   data-srcs="${srcs.join('|')}" data-i="0" onerror="imgFB(this)" alt="">`;
+/* achievement icons are stored as bare hashes to keep the data small */
+const ICONP = 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/';
+const achIcon = (appid, a) => a.icon ? ICONP + appid + '/' + a.icon + '.jpg' : '';
 
 if(D.profile){
   $('#av').src = D.profile.avatarfull || '';
@@ -288,8 +292,8 @@ function visible(){
   return g.slice().sort(cmp);
 }
 function trophies(x, n){
-  const got = x.achievements.filter(a => a.achieved && (a.icon||a.icongray));
-  return got.slice(0,n).map(a => img([a.icon||a.icongray])).join('') +
+  const got = x.achievements.filter(a => a.achieved && a.icon);
+  return got.slice(0,n).map(a => img([achIcon(x.appid,a)])).join('') +
     (got.length>n ? `<div class="more">+${got.length-n}</div>` : '');
 }
 
@@ -364,12 +368,12 @@ function renderList(){
 }
 
 /* ---------------- view 2: game page ---------------- */
-function aRow(a){
-  const icon = a.achieved ? (a.icon||a.icongray) : (a.icongray||a.icon);
+function aRow(a, appid){
+  const icon = achIcon(appid, a);
   const desc = a.desc ? esc(a.desc)
     : (a.hidden ? '<span style="color:var(--mut)">Hidden achievement — unlock to reveal.</span>' : '');
   return `<div class="arow ${a.achieved?'done':'locked'}">
-    ${img([icon||''])}
+    ${icon ? img([icon]) : '<div class="nicon"></div>'}
     <div><div class="at">${esc(a.title)}</div><div class="ad">${desc}</div></div>
     <div class="aright">
       ${typeof a.rarity==='number' ? `<div class="pct2">${a.rarity}% of players</div>` : ''}
@@ -399,7 +403,7 @@ function renderGame(appid){
     </div>
     <div class="sectionhead"><h2>Achievements</h2><span>${x.unlocked} of ${x.total} unlocked</span>
       <span class="legend">sorted rarest first</span></div>
-    <div class="alist">${sorted.map(aRow).join('')}</div>`;
+    <div class="alist">${sorted.map(a => aRow(a, x.appid)).join('')}</div>`;
   $('#back').onclick = () => { location.hash = ''; };
   window.scrollTo(0,0);
 }

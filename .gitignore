@@ -1,4 +1,5 @@
 .env
 .cache/
+data.json
 *.png
 .DS_Store

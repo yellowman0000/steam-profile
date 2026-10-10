@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import sys
 import time
 import urllib.error
@@ -152,20 +153,21 @@ def build_game(g, key, steamid, refresh):
         except (TypeError, ValueError):
             pass
 
+    def ihash(u):          # keep only the icon hash; the URL prefix is rebuilt in JS
+        return u.rsplit("/", 1)[-1].rsplit(".", 1)[0] if u else ""
+
     merged = []
     for a in ps["achievements"]:
         name = a.get("apiname", "")
         s = schema.get(name, {})
         desc = s.get("description", "") or ""
         merged.append({
-            "name": name,
             "title": s.get("displayName") or name,
             "desc": desc,
-            "hidden": bool(s.get("hidden", 0)),
-            "achieved": a.get("achieved") in (1, True),
+            "hidden": int(bool(s.get("hidden", 0))),
+            "achieved": int(a.get("achieved") in (1, True)),
             "unlocktime": a.get("unlocktime") or 0,
-            "icon": s.get("icon", ""),
-            "icongray": s.get("icongray", ""),
+            "icon": ihash(s.get("icon", "")),      # locked state is CSS grayscale
             "rarity": (round(glob[name], 2) if name in glob else None),
         })
 
@@ -329,17 +331,18 @@ def main():
     with open(os.path.join(HERE, "data.json"), "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False)
 
-    tpl_path = os.path.join(HERE, "template.html")
-    with open(tpl_path, encoding="utf-8") as f:
-        tpl = f.read()
-    blob = json.dumps(payload, ensure_ascii=False).replace("<", "\\u003c")
-    with open(os.path.join(HERE, "index.html"), "w", encoding="utf-8") as f:
-        f.write(tpl.replace("/*__STEAM_DATA__*/null", blob))
+    # Data lives in its own file so index.html stays tiny. A <script src> (not fetch)
+    # is used because it also works when the page is opened straight off disk.
+    with open(os.path.join(HERE, "data.js"), "w", encoding="utf-8") as f:
+        f.write("window.STEAM_DATA=")
+        json.dump(payload, f, ensure_ascii=False)
+        f.write(";")
+    shutil.copyfile(os.path.join(HERE, "template.html"), os.path.join(HERE, "index.html"))
 
     print("games with achievements: %d | perfect: %d | %d/%d (%.1f%%)" % (
         stats["gamesWithAchievements"], stats["perfectGames"],
         stats["unlockedAchievements"], stats["totalAchievements"], stats["completion"]))
-    print("wrote data.json + index.html")
+    print("wrote data.js + data.json + index.html")
 
 
 def _selftest():
