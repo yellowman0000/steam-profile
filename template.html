@@ -148,6 +148,36 @@
   body.editing .rowitem{cursor:crosshair}
   body.editing .rowitem:hover{border-color:rgba(247,201,72,.4);box-shadow:0 18px 50px -18px rgba(247,201,72,.35)}
 
+  /* polish: motion + loading */
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+  .rowitem,.scard{animation:rise .5s cubic-bezier(.2,.8,.2,1) backwards}
+  .rows .rowitem:nth-child(1){animation-delay:.02s}
+  .rows .rowitem:nth-child(2){animation-delay:.07s}
+  .rows .rowitem:nth-child(3){animation-delay:.12s}
+  .rows .rowitem:nth-child(4){animation-delay:.17s}
+  .rows .rowitem:nth-child(5){animation-delay:.22s}
+  .sgrid .scard:nth-child(1){animation-delay:.02s}
+  .sgrid .scard:nth-child(2){animation-delay:.07s}
+  .sgrid .scard:nth-child(3){animation-delay:.12s}
+  .sgrid .scard:nth-child(4){animation-delay:.17s}
+  .sgrid .scard:nth-child(5){animation-delay:.22s}
+  .sgrid .scard:nth-child(6){animation-delay:.27s}
+  .sgrid .scard:nth-child(7){animation-delay:.32s}
+  .sgrid .scard:nth-child(8){animation-delay:.37s}
+  /* art container shimmers until the cover loads, then parallaxes on hover */
+  .rt,.sart{background:linear-gradient(100deg,#0d131b 30%,#18222e 50%,#0d131b 70%);
+    background-size:200% 100%;animation:shimmer 1.6s linear infinite}
+  .rt img,.sart img{transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+  .rowitem:hover .rt img,.scard:hover .sart img{transform:scale(1.07)}
+  ::view-transition-old(root),::view-transition-new(root){
+    animation-duration:.34s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+  @media (prefers-reduced-motion: reduce){
+    .rowitem,.scard,.rt,.sart{animation:none}
+    .rt img,.sart img{transition:none}
+    ::view-transition-old(root),::view-transition-new(root){animation-duration:.01s}
+  }
+
   /* pager / misc */
   .pager{display:flex;gap:14px;align-items:center;justify-content:center;margin:30px 0 6px;color:var(--mut);font-size:13.5px}
   .pager button{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:999px;
@@ -410,7 +440,8 @@ function renderGame(appid){
 
 function route(){
   const h = location.hash.replace(/^#\/?/,'');
-  if(h.startsWith('g/')) renderGame(+h.slice(2)); else renderList();
+  const go = () => { if(h.startsWith('g/')) renderGame(+h.slice(2)); else renderList(); };
+  if(document.startViewTransition) document.startViewTransition(go); else go();   // page morph
 }
 window.addEventListener('hashchange', route);
 document.addEventListener('keydown', e => {
