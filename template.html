@@ -124,7 +124,6 @@
   /* showcase */
   .showcase{margin:6px 0 26px}
   .showcase h2{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:0 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .showcase h2 .tag{font-size:11px;color:var(--mut);font-weight:500;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
   .sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
   .scard{border-radius:13px;overflow:hidden;background:var(--card);border:1px solid var(--line);cursor:pointer;
     transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s,box-shadow .22s}
@@ -133,20 +132,6 @@
   .sart img{width:100%;height:100%;object-fit:cover;display:block}
   .sbar{background:#2f7fe0;color:#fff;padding:7px 11px;font-size:12px;font-weight:600;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis}
-  .sempty{color:var(--mut);font-size:13.5px;padding:18px;border:1px dashed var(--line);border-radius:16px;grid-column:1/-1}
-
-  /* showcase edit mode */
-  .editbar{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:50;display:flex;gap:10px;
-    align-items:center;background:rgba(18,18,22,.94);border:1px solid var(--line);border-radius:999px;
-    padding:10px 16px;backdrop-filter:blur(14px);box-shadow:0 20px 60px rgba(0,0,0,.65);font-size:13.5px;white-space:nowrap}
-  .editbar button{background:var(--blue);border:0;color:#fff;border-radius:999px;padding:8px 16px;cursor:pointer;
-    font-size:13px;font-weight:600;font-family:inherit}
-  .editbar button.ghost{background:var(--card);border:1px solid var(--line);color:var(--txt);font-weight:500}
-  .rowitem .star{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
-    border:1px solid var(--line);background:var(--card);color:var(--mut);font-size:16px}
-  .rowitem .star.on{background:rgba(247,201,72,.18);border-color:rgba(247,201,72,.5);color:var(--gold)}
-  body.editing .rowitem{cursor:crosshair}
-  body.editing .rowitem:hover{border-color:rgba(247,201,72,.4);box-shadow:0 18px 50px -18px rgba(247,201,72,.35)}
 
   /* polish: motion + loading */
   @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
@@ -267,53 +252,20 @@ $('#socials').innerHTML = SOCIAL.map(s =>
 const games = D.games || [];
 let filter='all', sortBy='completion', query='', page=1;
 
-/* ---- Completionist Showcase (owner-editable, visitors view-only) ---- */
-/* The published list is baked in at build time (showcase.json -> data.js). Local edits
-   are kept in localStorage so they survive a refresh; "Save showcase.json" is what
-   actually publishes them, since a static page can't write files by itself. */
-const PUBLISHED = (D.showcase || []).slice();
-const STORE_KEY = 'steam-profile:showcase';
-let showcase = (() => {
-  try { const s = JSON.parse(localStorage.getItem(STORE_KEY)); if(Array.isArray(s)) return s; } catch(e){}
-  return PUBLISHED.slice();
-})();
-let editing = false;
-const isDirty = () => JSON.stringify(showcase) !== JSON.stringify(PUBLISHED);
-const persist = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(showcase)); } catch(e){} };
+/* ---- Completionist Showcase: baked in from showcase.json at build time ---- */
+/* Read-only on the page — a static site cannot write files back, so the list is
+   set in showcase.json and rebuilt (run publish.sh). */
+const showcase = D.showcase || [];
 function sCard(x){
   return `<div class="scard" data-appid="${x.appid}">
     <div class="sart">${img(x.images)}</div>
     <div class="sbar">${x.unlocked} / ${x.total} Achievements</div></div>`;
 }
 function showcaseHtml(){
-  if(!showcase.length && !editing) return '';
+  if(!showcase.length) return '';
   const items = showcase.map(id => games.find(g => g.appid === id)).filter(Boolean);
-  return `<section class="showcase">
-    <h2>Completionist Showcase ${editing?'<span class="tag">edit mode — click any game below to add or remove it</span>':''}</h2>
-    <div class="sgrid">${items.length ? items.map(sCard).join('')
-      : '<div class="sempty">No games picked yet. Press ⌘E, then click games below to add them.</div>'}</div>
-  </section>`;
-}
-function toggleShowcase(id){
-  const i = showcase.indexOf(id);
-  if(i >= 0) showcase.splice(i,1); else showcase.push(id);
-  persist();
-  renderList();
-}
-function saveShowcase(){
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(showcase, null, 2)], {type:'application/json'}));
-  a.download = 'showcase.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-function editBar(){
-  if(!editing) return '';
-  return `<div class="editbar"><span>${showcase.length} game${showcase.length===1?'':'s'} in showcase</span>
-    <span style="color:${isDirty()?'var(--gold)':'var(--grn)'}">${isDirty()?'not published':'published'}</span>
-    <button id="saveSC">Save showcase.json</button>
-    <button class="ghost" id="resetSC">Reset</button>
-    <button class="ghost" id="doneSC">Done</button></div>`;
+  return `<section class="showcase"><h2>Completionist Showcase</h2>
+    <div class="sgrid">${items.map(sCard).join('')}</div></section>`;
 }
 
 function rarity(g){
@@ -355,7 +307,7 @@ function row(x){
       </div>
       <div class="tro">${trophies(x,5)}</div>
     </div>
-    ${editing?`<div class="star ${showcase.includes(x.appid)?'on':''}">★</div>`:'<div class="chev">›</div>'}
+    <div class="chev">›</div>
   </article>`;
 }
 function renderList(){
@@ -384,8 +336,7 @@ function renderList(){
     <div class="rows">${slice.length ? slice.map(row).join('') : '<div class="empty">No games match.</div>'}</div>
     ${pages>1 ? `<div class="pager"><button id="prev" ${page<=1?'disabled':''}>‹ Prev</button>
       <span>Page ${page} of ${pages}</span><button id="next" ${page>=pages?'disabled':''}>Next ›</button></div>`:''}
-    <div class="foot">Steam achievements · click a game for its full achievement page · press <b>⌘E</b> to edit the showcase</div>
-    ${editBar()}`;
+    <div class="foot">Steam achievements · click a game for its full achievement page</div>`;
 
   $('#sort').value = sortBy;
   $('#tabs').onclick = e => { if(e.target.dataset.f){ filter=e.target.dataset.f; page=1; renderList(); } };
@@ -394,15 +345,7 @@ function renderList(){
   $('#view').querySelectorAll('.scard').forEach(el =>
     el.onclick = () => { location.hash = '#/g/' + el.dataset.appid; });
   $('#view').querySelectorAll('.rowitem').forEach(el =>
-    el.onclick = () => {
-      if(editing){ toggleShowcase(+el.dataset.appid); return; }
-      location.hash = '#/g/' + el.dataset.appid;
-    });
-  if(editing){
-    $('#saveSC').onclick = saveShowcase;
-    $('#resetSC').onclick = () => { showcase = PUBLISHED.slice(); persist(); renderList(); };
-    $('#doneSC').onclick = () => { editing = false; document.body.classList.remove('editing'); renderList(); };
-  }
+    el.onclick = () => { location.hash = '#/g/' + el.dataset.appid; });
   if(pages>1){
     $('#prev').onclick = () => { page--; renderList(); window.scrollTo(0,0); };
     $('#next').onclick = () => { page++; renderList(); window.scrollTo(0,0); };
@@ -456,15 +399,6 @@ function route(){
   if(document.startViewTransition) document.startViewTransition(go); else go();   // page morph
 }
 window.addEventListener('hashchange', route);
-document.addEventListener('keydown', e => {
-  if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
-  if((e.metaKey || e.ctrlKey) && (e.key === 'e' || e.key === 'E')){   // owner-only showcase editor
-    e.preventDefault();
-    editing = !editing;
-    document.body.classList.toggle('editing', editing);
-    if(location.hash) location.hash = ''; else renderList();
-  }
-});
 route();
 </script>
 </body>
