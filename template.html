@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steam Profile</title>
+<style>
+  :root{
+    --bg:#000; --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.07);
+    --line:rgba(255,255,255,.09); --txt:#fff; --mut:#9a9aa2; --blue:#4a9eff;
+    --gold:#f7c948; --grn:#4ade80; --rare:#4a9eff; --dblue:#1b4b9e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1300px 820px at 14% -8%, rgba(31,88,200,.30), transparent 62%),
+      radial-gradient(1250px 880px at 94% -4%, rgba(128,62,218,.27), transparent 60%),
+      radial-gradient(1100px 900px at -4% 76%, rgba(74,46,176,.22), transparent 62%),
+      radial-gradient(1500px 1050px at 62% 128%, rgba(48,84,188,.24), transparent 66%),
+      #000;
+    background-attachment:fixed;
+    color:var(--txt); min-height:100vh;
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--blue);text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px 90px}
+
+  /* top bar */
+  .top{display:flex;align-items:center;gap:16px;padding:30px 0 22px;flex-wrap:wrap}
+  .top img.av{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);background:var(--card)}
+  .top .nm{font-size:21px;font-weight:600;letter-spacing:-.02em}
+  .top .sub{color:var(--mut);font-size:12.5px;margin-top:2px}
+  .top .sub a{color:var(--mut)}
+  .top .sub a:hover{color:var(--blue)}
+  .kpis{margin-left:auto;display:flex;gap:34px;flex-wrap:wrap}
+  .kpi .n{font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1}
+  .kpi .l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.7px;margin-top:5px}
+  .kpi.gold .n{color:var(--gold)} .kpi.blue .n{color:var(--blue)}
+
+  .socials{display:flex;gap:9px;margin-top:9px}
+  .socials a{width:33px;height:33px;display:flex;align-items:center;justify-content:center;
+    border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--mut);transition:.18s}
+  .socials a:hover{color:#fff;border-color:var(--blue);background:var(--card2);transform:translateY(-2px)}
+  .socials svg{width:18px;height:18px}
+
+  /* controls */
+  .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:4px 0 18px}
+  .seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .seg button{border:0;background:none;color:var(--mut);padding:9px 18px;border-radius:999px;
+    font-size:13.5px;font-weight:500;cursor:pointer;transition:.18s}
+  .seg button.on{background:rgba(255,255,255,.14);color:#fff}
+  .seg button:hover{color:#fff}
+  .search{flex:1;min-width:160px;background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:11px 18px;color:var(--txt);outline:none;font-size:14px}
+  .search:focus{border-color:var(--blue)}
+  select{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:999px;
+    padding:11px 16px;outline:none;font-size:13.5px;cursor:pointer}
+  .count{color:var(--mut);font-size:12.5px;margin:0 4px 16px}
+
+  /* library rows */
+  .rows{display:flex;flex-direction:column;gap:16px}
+  .rowitem{display:grid;grid-template-columns:minmax(240px,320px) 1fr auto;gap:22px;align-items:center;
+    background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;cursor:pointer;
+    transition:transform .22s cubic-bezier(.2,.8,.2,1),background .22s,border-color .22s,box-shadow .22s}
+  .rowitem:hover{transform:translateY(-3px);background:var(--card2);border-color:rgba(255,255,255,.22);
+    box-shadow:0 18px 50px -18px rgba(74,158,255,.45)}
+  .rt{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:16/9;background:#111}
+  .rt img{width:100%;height:100%;object-fit:cover;display:block}
+  .badge{position:absolute;top:10px;left:10px;font-size:10.5px;font-weight:700;letter-spacing:.6px;
+    padding:4px 10px;border-radius:999px;backdrop-filter:blur(8px);background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.18)}
+  .badge.gold{color:var(--gold);border-color:rgba(247,201,72,.45)}
+  .badge.fam{color:#bcd9ff;border-color:rgba(74,158,255,.4)}
+  .rinfo h3{margin:0 0 12px;font-size:23px;font-weight:600;letter-spacing:-.02em}
+  .meta{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-end}
+  .meta .f .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut)}
+  .meta .f .v{font-size:17px;font-weight:600;margin-top:3px}
+  .achcol{min-width:210px;flex:1}
+  .achcol .top2{display:flex;justify-content:space-between;align-items:baseline}
+  .bar{height:5px;border-radius:20px;background:rgba(255,255,255,.13);margin-top:8px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:20px;background:var(--blue);transition:width .5s}
+  .perfect .bar i,.bar.perfect i{background:var(--dblue)}
+  .tro{display:flex;gap:5px;margin-top:13px;flex-wrap:wrap}
+  .tro img{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.08)}
+  .tro .more{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.08);color:var(--mut);
+    font-size:11.5px;display:flex;align-items:center;justify-content:center}
+  .chev{color:var(--mut);font-size:20px;padding:0 4px}
+
+  /* game page */
+  .back{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+    color:var(--txt);border-radius:999px;padding:9px 18px;font-size:13.5px;cursor:pointer;margin:6px 0 18px}
+  .back:hover{border-color:var(--blue);color:var(--blue)}
+  .hero{position:relative;border-radius:24px;overflow:hidden;min-height:300px;display:flex;align-items:flex-end;
+    border:1px solid var(--line)}
+  .hero img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .hero .fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,.55) 60%,rgba(0,0,0,.92) 100%)}
+  .hero .ht{position:relative;padding:28px 30px;width:100%}
+  .hero h1{margin:0 0 8px;font-size:38px;font-weight:600;letter-spacing:-.025em;text-shadow:0 2px 20px rgba(0,0,0,.6)}
+  .hstats{display:flex;gap:28px;align-items:baseline;color:#e6e6ea;font-size:14px;flex-wrap:wrap}
+  .hstats b{font-size:16px}
+  .barwrap{margin-top:16px;max-width:560px}
+
+  .sectionhead{display:flex;align-items:baseline;gap:14px;margin:34px 0 16px}
+  .sectionhead h2{margin:0;font-size:22px;font-weight:600;letter-spacing:-.02em}
+  .sectionhead span{color:var(--mut);font-size:13.5px}
+  .legend{margin-left:auto;color:var(--mut);font-size:12px}
+
+  .alist{display:flex;flex-direction:column;gap:8px}
+  .arow{display:grid;grid-template-columns:56px 1fr auto;gap:16px;align-items:center;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 18px}
+  .arow img{width:56px;height:56px;border-radius:12px;background:rgba(255,255,255,.06)}
+  .arow.locked{opacity:.62}
+  .arow.locked img{filter:grayscale(1)}
+  .arow .at{font-size:15.5px;font-weight:600;letter-spacing:-.005em}
+  .arow .ad{font-size:13.5px;color:var(--mut);margin-top:3px}
+  .arow .aright{text-align:right;min-width:120px}
+  .arow .pct2{font-size:13px;color:var(--rare);font-weight:600}
+  .arow .dt{font-size:12px;color:#fff;margin-top:4px}
+  .arow .dt.no{color:var(--mut)}
+  .arow.done{box-shadow:inset 0 0 0 1px rgba(247,201,72,.25)}
+
+  /* showcase */
+  .showcase{margin:6px 0 26px}
+  .showcase h2{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:0 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .showcase h2 .tag{font-size:11px;color:var(--mut);font-weight:500;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  .sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .scard{border-radius:13px;overflow:hidden;background:var(--card);border:1px solid var(--line);cursor:pointer;
+    transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s,box-shadow .22s}
+  .scard:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.22);box-shadow:0 14px 36px -16px rgba(47,127,224,.65)}
+  .sart{aspect-ratio:16/9;overflow:hidden;background:#111}
+  .sart img{width:100%;height:100%;object-fit:cover;display:block}
+  .sbar{background:#2f7fe0;color:#fff;padding:7px 11px;font-size:12px;font-weight:600;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .sempty{color:var(--mut);font-size:13.5px;padding:18px;border:1px dashed var(--line);border-radius:16px;grid-column:1/-1}
+
+  /* showcase edit mode */
+  .editbar{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:50;display:flex;gap:10px;
+    align-items:center;background:rgba(18,18,22,.94);border:1px solid var(--line);border-radius:999px;
+    padding:10px 16px;backdrop-filter:blur(14px);box-shadow:0 20px 60px rgba(0,0,0,.65);font-size:13.5px;white-space:nowrap}
+  .editbar button{background:var(--blue);border:0;color:#fff;border-radius:999px;padding:8px 16px;cursor:pointer;
+    font-size:13px;font-weight:600;font-family:inherit}
+  .editbar button.ghost{background:var(--card);border:1px solid var(--line);color:var(--txt);font-weight:500}
+  .rowitem .star{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--line);background:var(--card);color:var(--mut);font-size:16px}
+  .rowitem .star.on{background:rgba(247,201,72,.18);border-color:rgba(247,201,72,.5);color:var(--gold)}
+  body.editing .rowitem{cursor:crosshair}
+  body.editing .rowitem:hover{border-color:rgba(247,201,72,.4);box-shadow:0 18px 50px -18px rgba(247,201,72,.35)}
+
+  /* pager / misc */
+  .pager{display:flex;gap:14px;align-items:center;justify-content:center;margin:30px 0 6px;color:var(--mut);font-size:13.5px}
+  .pager button{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:999px;
+    padding:9px 18px;cursor:pointer;font-size:13.5px}
+  .pager button:hover:not(:disabled){border-color:var(--blue);color:var(--blue)}
+  .pager button:disabled{opacity:.3;cursor:default}
+  .empty{color:var(--mut);text-align:center;padding:80px 0}
+  .foot{color:var(--mut);font-size:12px;text-align:center;margin-top:40px}
+  @media(max-width:780px){
+    .rowitem{grid-template-columns:1fr}
+    .sgrid{grid-template-columns:repeat(2,1fr)}
+    .chev{display:none}
+    .hero h1{font-size:27px}
+    .kpis{margin-left:0;gap:22px;width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <img class="av" id="av" alt="">
+    <div>
+      <div class="nm" id="nm">Steam Profile</div>
+      <div class="sub" id="sub"></div>
+      <div class="socials" id="socials"></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+  <div id="view"></div>
+</div>
+
+<script id="steam-data" type="application/json">/*__STEAM_DATA__*/null</script>
+<script>
+const D = JSON.parse(document.getElementById('steam-data').textContent);
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtHours = m => (m/60).toLocaleString(undefined,{maximumFractionDigits:1}) + ' hours';
+const fmtDay = t => {
+  if(!t) return '—';
+  const d = new Date(t*1000), now = new Date();
+  const o = {month:'short', day:'numeric'};
+  if(d.getFullYear() !== now.getFullYear()) o.year = 'numeric';
+  return d.toLocaleDateString(undefined, o);
+};
+const fmtFull = t => t ? new Date(t*1000).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) : '';
+const PAGE = 5;
+/* ---- social links: put your own handles here ---- */
+const SOCIAL = [
+  { name:'YouTube',   url:'https://www.youtube.com/@salmonm4n', icon:'youtube' },
+  { name:'TikTok',    url:'https://www.tiktok.com/@_project.prwp_', icon:'tiktok' },
+  { name:'Instagram', url:'https://www.instagram.com/_project.prwp_/', icon:'instagram' },
+  { name:'Threads',   url:'https://www.threads.com/@_project.prwp_?igshid=NTc4MTIwNjQ2YQ==', icon:'threads' },
+];
+const ICONS = {
+  youtube:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.07 0 12 0 12s0 3.93.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.93 24 12 24 12s0-3.93-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z"/></svg>',
+  threads:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.19 24h-.01c-3.58-.02-6.33-1.2-8.18-3.51C2.35 18.44 1.5 15.59 1.47 12.01v-.02c.03-3.58.88-6.43 2.53-8.48C5.85 1.2 8.6.02 12.18 0h.01c2.75.02 5.04.73 6.83 2.1 1.68 1.29 2.86 3.13 3.51 5.47l-2.04.57c-1.1-3.96-3.9-5.98-8.3-6.02-2.91.03-5.11.94-6.54 2.72-1.3 1.62-1.99 4.03-2.02 7.11.03 3.09.72 5.5 2.06 7.16 1.43 1.78 3.63 2.7 6.54 2.72 2.62-.02 4.36-.63 5.8-2.05 1.65-1.61 1.62-3.59 1.09-4.8-.31-.71-.87-1.3-1.63-1.75-.19 1.35-.62 2.45-1.28 3.27-.89 1.1-2.14 1.7-3.73 1.79-1.2.07-2.36-.22-3.26-.8a3.55 3.55 0 0 1-1.75-2.96c-.07-1.19.41-2.29 1.33-3.08.88-.76 2.12-1.21 3.58-1.29a13.9 13.9 0 0 1 3.02.14c-.13-.74-.38-1.33-.75-1.76-.51-.58-1.31-.88-2.36-.89h-.03c-.84 0-1.99.23-2.72 1.32l-1.83-1.22c.98-1.45 2.57-2.26 4.48-2.26h.04c3.19.02 5.1 1.98 5.29 5.39.11.05.22.09.32.14 1.49.7 2.58 1.76 3.15 3.07.8 1.82.87 4.79-1.55 7.16-1.85 1.81-4.09 2.63-7.28 2.65zm1-11.69c-.24 0-.49.01-.74.02-1.84.1-2.98.95-2.92 2.14.07 1.26 1.45 1.84 2.78 1.77 1.22-.07 2.82-.54 3.09-3.71a10.5 10.5 0 0 0-2.21-.22z"/></svg>',
+  instagram:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92C2.16 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85C2.38 3.92 3.9 2.38 7.15 2.23 8.42 2.17 8.8 2.16 12 2.16zM12 0C8.74 0 8.33.01 7.05.07 2.7.27.27 2.69.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.2-4.35-2.62-6.78-6.98-6.98C15.67.01 15.26 0 12 0zm0 5.84A6.16 6.16 0 1 0 12 18.16 6.16 6.16 0 0 0 12 5.84zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.41-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z"/></svg>',
+  tiktok:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>',
+};
+window.imgFB = el => {
+  const list = (el.dataset.srcs||'').split('|').filter(Boolean);
+  let i = (+el.dataset.i || 0) + 1; el.dataset.i = i;
+  if (i < list.length) el.src = list[i]; else el.style.visibility = 'hidden';
+};
+const img = (srcs, cls) => `<img class="${cls||''}" loading="lazy" src="${srcs[0]}"
+  data-srcs="${srcs.join('|')}" data-i="0" onerror="imgFB(this)" alt="">`;
+
+if(D.profile){
+  $('#av').src = D.profile.avatarfull || '';
+  $('#nm').textContent = D.profile.personaname || 'Steam Profile';
+  $('#sub').innerHTML = 'SteamID64 ' + D.profile.steamid +
+    (D.profile.profileurl ? ' &middot; <a href="'+esc(D.profile.profileurl)+'" target="_blank">view profile</a>' : '');
+}
+const S = D.stats || {};
+$('#kpis').innerHTML = [
+  ['Total games', S.totalGames, ''],
+  ['Perfect', S.perfectGames, 'gold'],
+  ['Achievements', (S.unlockedAchievements||0).toLocaleString()+' / '+(S.totalAchievements||0).toLocaleString(), 'blue'],
+  ['Completion', (S.completion||0)+'%', ''],
+].map(([l,n,c]) => `<div class="kpi ${c}"><div class="n">${n??0}</div><div class="l">${l}</div></div>`).join('');
+$('#socials').innerHTML = SOCIAL.map(s =>
+  `<a href="${esc(s.url)}" target="_blank" rel="noopener" title="${esc(s.name)}">${ICONS[s.icon]||''}</a>`).join('');
+
+const games = D.games || [];
+let filter='all', sortBy='completion', query='', page=1;
+
+/* ---- Completionist Showcase (owner-editable, visitors view-only) ---- */
+let showcase = (D.showcase || []).slice();
+let editing = false;
+function sCard(x){
+  return `<div class="scard" data-appid="${x.appid}">
+    <div class="sart">${img(x.images)}</div>
+    <div class="sbar">${x.unlocked} / ${x.total} Achievements</div></div>`;
+}
+function showcaseHtml(){
+  if(!showcase.length && !editing) return '';
+  const items = showcase.map(id => games.find(g => g.appid === id)).filter(Boolean);
+  return `<section class="showcase">
+    <h2>Completionist Showcase ${editing?'<span class="tag">edit mode — click any game below to add or remove it</span>':''}</h2>
+    <div class="sgrid">${items.length ? items.map(sCard).join('')
+      : '<div class="sempty">No games picked yet. Press ⌘E, then click games below to add them.</div>'}</div>
+  </section>`;
+}
+function toggleShowcase(id){
+  const i = showcase.indexOf(id);
+  if(i >= 0) showcase.splice(i,1); else showcase.push(id);
+  renderList();
+}
+function saveShowcase(){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(showcase, null, 2)], {type:'application/json'}));
+  a.download = 'showcase.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function editBar(){
+  if(!editing) return '';
+  return `<div class="editbar"><span>${showcase.length} game${showcase.length===1?'':'s'} in showcase</span>
+    <button id="saveSC">Save showcase.json</button>
+    <button class="ghost" id="clearSC">Clear</button>
+    <button class="ghost" id="doneSC">Done</button></div>`;
+}
+
+function rarity(g){
+  const u = g.achievements.filter(a => a.achieved && typeof a.rarity==='number');
+  return u.length ? Math.min(...u.map(a=>a.rarity)) : 999;
+}
+function visible(){
+  let g = games.filter(x => x.name.toLowerCase().includes(query));
+  if(filter==='perfect')  g = g.filter(x=>x.perfect);
+  if(filter==='progress') g = g.filter(x=>!x.perfect);
+  const cmp = {
+    completion:(a,b)=> b.percent-a.percent || a.name.localeCompare(b.name),
+    name:(a,b)=> a.name.localeCompare(b.name),
+    playtime:(a,b)=> b.playtime-a.playtime,
+    recent:(a,b)=> (b.last_played||0)-(a.last_played||0),
+    rarity:(a,b)=> rarity(a)-rarity(b),
+  }[sortBy];
+  return g.slice().sort(cmp);
+}
+function trophies(x, n){
+  const got = x.achievements.filter(a => a.achieved && (a.icon||a.icongray));
+  return got.slice(0,n).map(a => img([a.icon||a.icongray])).join('') +
+    (got.length>n ? `<div class="more">+${got.length-n}</div>` : '');
+}
+
+/* ---------------- view 1: library ---------------- */
+function row(x){
+  return `<article class="rowitem ${x.perfect?'perfect':''}" data-appid="${x.appid}">
+    <div class="rt">${img(x.images)}
+      ${x.perfect?'<span class="badge gold">★ 100%</span>':''}
+    </div>
+    <div class="rinfo">
+      <h3>${esc(x.name)}</h3>
+      <div class="meta">
+        <div class="f"><div class="l">Total played</div><div class="v">${x.playtime?fmtHours(x.playtime):'—'}</div></div>
+        <div class="f"><div class="l">Last played</div><div class="v">${fmtDay(x.last_played)}</div></div>
+        <div class="f achcol"><div class="top2"><div class="l">Achievements</div><div class="v" style="font-size:14px;color:var(--blue)">${x.unlocked}/${x.total}</div></div>
+          <div class="bar"><i style="width:${x.percent}%"></i></div></div>
+      </div>
+      <div class="tro">${trophies(x,5)}</div>
+    </div>
+    ${editing?`<div class="star ${showcase.includes(x.appid)?'on':''}">★</div>`:'<div class="chev">›</div>'}
+  </article>`;
+}
+function renderList(){
+  const all = visible();
+  const pages = Math.max(1, Math.ceil(all.length / PAGE));
+  page = Math.min(Math.max(1, page), pages);
+  const slice = all.slice((page-1)*PAGE, page*PAGE);
+  $('#view').innerHTML = `
+    ${showcaseHtml()}
+    <div class="controls">
+      <div class="seg" id="tabs">
+        <button data-f="all" class="${filter==='all'?'on':''}">All games</button>
+        <button data-f="perfect" class="${filter==='perfect'?'on':''}">Perfect</button>
+        <button data-f="progress" class="${filter==='progress'?'on':''}">In progress</button>
+      </div>
+      <input class="search" id="q" placeholder="Search games" value="${esc(query)}">
+      <select id="sort">
+        <option value="completion">Sort · Completion</option>
+        <option value="name">Sort · Name</option>
+        <option value="playtime">Sort · Playtime</option>
+        <option value="recent">Sort · Recently played</option>
+        <option value="rarity">Sort · Rarest</option>
+      </select>
+    </div>
+    <div class="count">${all.length} game${all.length===1?'':'s'} &middot; data pulled ${D.generated||''}</div>
+    <div class="rows">${slice.length ? slice.map(row).join('') : '<div class="empty">No games match.</div>'}</div>
+    ${pages>1 ? `<div class="pager"><button id="prev" ${page<=1?'disabled':''}>‹ Prev</button>
+      <span>Page ${page} of ${pages}</span><button id="next" ${page>=pages?'disabled':''}>Next ›</button></div>`:''}
+    <div class="foot">Steam achievements · click a game for its full achievement page · press <b>⌘E</b> to edit the showcase</div>
+    ${editBar()}`;
+
+  $('#sort').value = sortBy;
+  $('#tabs').onclick = e => { if(e.target.dataset.f){ filter=e.target.dataset.f; page=1; renderList(); } };
+  $('#q').oninput = e => { query = e.target.value.trim().toLowerCase(); page=1; renderList(); };
+  $('#sort').onchange = e => { sortBy = e.target.value; page=1; renderList(); };
+  $('#view').querySelectorAll('.scard').forEach(el =>
+    el.onclick = () => { location.hash = '#/g/' + el.dataset.appid; });
+  $('#view').querySelectorAll('.rowitem').forEach(el =>
+    el.onclick = () => {
+      if(editing){ toggleShowcase(+el.dataset.appid); return; }
+      location.hash = '#/g/' + el.dataset.appid;
+    });
+  if(editing){
+    $('#saveSC').onclick = saveShowcase;
+    $('#clearSC').onclick = () => { showcase = []; renderList(); };
+    $('#doneSC').onclick = () => { editing = false; document.body.classList.remove('editing'); renderList(); };
+  }
+  if(pages>1){
+    $('#prev').onclick = () => { page--; renderList(); window.scrollTo(0,0); };
+    $('#next').onclick = () => { page++; renderList(); window.scrollTo(0,0); };
+  }
+}
+
+/* ---------------- view 2: game page ---------------- */
+function aRow(a){
+  const icon = a.achieved ? (a.icon||a.icongray) : (a.icongray||a.icon);
+  const desc = a.desc ? esc(a.desc)
+    : (a.hidden ? '<span style="color:var(--mut)">Hidden achievement — unlock to reveal.</span>' : '');
+  return `<div class="arow ${a.achieved?'done':'locked'}">
+    ${img([icon||''])}
+    <div><div class="at">${esc(a.title)}</div><div class="ad">${desc}</div></div>
+    <div class="aright">
+      ${typeof a.rarity==='number' ? `<div class="pct2">${a.rarity}% of players</div>` : ''}
+      <div class="dt ${a.achieved?'':'no'}">${a.achieved ? '✓ '+(fmtFull(a.unlocktime)||'Unlocked') : 'Locked'}</div>
+    </div></div>`;
+}
+function renderGame(appid){
+  const x = games.find(g => g.appid === appid);
+  if(!x){ location.hash=''; return; }
+  const heroSrcs = [x.images[2], x.images[0], x.images[1]];   // game page: prefer library_hero
+  const sorted = x.achievements.slice().sort((a,b)=>(a.rarity??999)-(b.rarity??999));
+  $('#view').innerHTML = `
+    <button class="back" id="back">‹ Library</button>
+    <div class="hero">
+      ${img(heroSrcs, 'bg')}<div class="fade"></div>
+      <div class="ht">
+        <h1>${esc(x.name)}</h1>
+        <div class="hstats">
+          <span><b>${x.unlocked}</b> of ${x.total} achievements</span>
+          <span><b>${x.percent}%</b> complete</span>
+          ${x.playtime?`<span><b>${fmtHours(x.playtime)}</b> played</span>`:''}
+          ${x.last_played?`<span>Last played <b>${fmtDay(x.last_played)}</b></span>`:''}
+          ${x.perfect?`<span class="badge gold" style="position:static">★ PERFECT</span>`:''}
+        </div>
+        <div class="barwrap"><div class="bar ${x.perfect?'perfect':''}" style="height:7px"><i style="width:${x.percent}%"></i></div></div>
+      </div>
+    </div>
+    <div class="sectionhead"><h2>Achievements</h2><span>${x.unlocked} of ${x.total} unlocked</span>
+      <span class="legend">sorted rarest first</span></div>
+    <div class="alist">${sorted.map(aRow).join('')}</div>`;
+  $('#back').onclick = () => { location.hash = ''; };
+  window.scrollTo(0,0);
+}
+
+function route(){
+  const h = location.hash.replace(/^#\/?/,'');
+  if(h.startsWith('g/')) renderGame(+h.slice(2)); else renderList();
+}
+window.addEventListener('hashchange', route);
+document.addEventListener('keydown', e => {
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+  if((e.metaKey || e.ctrlKey) && (e.key === 'e' || e.key === 'E')){   // owner-only showcase editor
+    e.preventDefault();
+    editing = !editing;
+    document.body.classList.toggle('editing', editing);
+    if(location.hash) location.hash = ''; else renderList();
+  }
+});
+route();
+</script>
+</body>
+</html>
