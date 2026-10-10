@@ -268,8 +268,18 @@ const games = D.games || [];
 let filter='all', sortBy='completion', query='', page=1;
 
 /* ---- Completionist Showcase (owner-editable, visitors view-only) ---- */
-let showcase = (D.showcase || []).slice();
+/* The published list is baked in at build time (showcase.json -> data.js). Local edits
+   are kept in localStorage so they survive a refresh; "Save showcase.json" is what
+   actually publishes them, since a static page can't write files by itself. */
+const PUBLISHED = (D.showcase || []).slice();
+const STORE_KEY = 'steam-profile:showcase';
+let showcase = (() => {
+  try { const s = JSON.parse(localStorage.getItem(STORE_KEY)); if(Array.isArray(s)) return s; } catch(e){}
+  return PUBLISHED.slice();
+})();
 let editing = false;
+const isDirty = () => JSON.stringify(showcase) !== JSON.stringify(PUBLISHED);
+const persist = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(showcase)); } catch(e){} };
 function sCard(x){
   return `<div class="scard" data-appid="${x.appid}">
     <div class="sart">${img(x.images)}</div>
@@ -287,6 +297,7 @@ function showcaseHtml(){
 function toggleShowcase(id){
   const i = showcase.indexOf(id);
   if(i >= 0) showcase.splice(i,1); else showcase.push(id);
+  persist();
   renderList();
 }
 function saveShowcase(){
@@ -299,8 +310,9 @@ function saveShowcase(){
 function editBar(){
   if(!editing) return '';
   return `<div class="editbar"><span>${showcase.length} game${showcase.length===1?'':'s'} in showcase</span>
+    <span style="color:${isDirty()?'var(--gold)':'var(--grn)'}">${isDirty()?'not published':'published'}</span>
     <button id="saveSC">Save showcase.json</button>
-    <button class="ghost" id="clearSC">Clear</button>
+    <button class="ghost" id="resetSC">Reset</button>
     <button class="ghost" id="doneSC">Done</button></div>`;
 }
 
@@ -388,7 +400,7 @@ function renderList(){
     });
   if(editing){
     $('#saveSC').onclick = saveShowcase;
-    $('#clearSC').onclick = () => { showcase = []; renderList(); };
+    $('#resetSC').onclick = () => { showcase = PUBLISHED.slice(); persist(); renderList(); };
     $('#doneSC').onclick = () => { editing = false; document.body.classList.remove('editing'); renderList(); };
   }
   if(pages>1){
